@@ -10,10 +10,12 @@
 ####################  Setup  ####################
 # import packages
 import os
+from datetime import datetime
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import freqit
+from pandas_profiling import ProfileReport
 
 # set working, output directories
 workdir = r'/Users/Lauren/Documents/Python/Kaggle/SlicedS01E01'
@@ -36,3 +38,28 @@ colordict = {'dblue': '#003f5c'
             }
 
 ####################  Get Data  ####################
+traindf = pd.read_csv(datadir+'train.csv')
+testdf = pd.read_csv(datadir+'test.csv')
+
+# view header
+traindf.head()
+testdf.head()
+
+traindf.info()
+testdf.info()
+
+trprofile = ProfileReport(traindf, title="Board Games Train", explorative=True)
+trprofile.to_widgets()
+trprofile.to_file(workdir+"train_profile_report.html")
+
+teprofile = ProfileReport(traindf, title="Board Games Test", explorative=True)
+teprofile.to_widgets()
+
+# do not use: names
+# may be able to condense: mechanic, category1-12, designer
+
+# use: num_votes, age (same as year?), owned
+# impute zeroes: min_players, max_players, avg_time, min_time, max_time
+# impute unrealistic min: year
+
+# outcome: geek_rating
