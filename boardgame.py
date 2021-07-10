@@ -73,6 +73,30 @@ traindf.log_geek_rating.hist()
 
 ####################  Preprocess  ####################
 
+# look at unlikely years
+traindf.loc[traindf['year'] < 1000, ['names','year','designer']]
+# the games with very early years appear to be accurate (Backgammon, Go have 
+# been played since BC for example). Do not impute year.
+
+# cut year into bins
+traindf['year_grp'] = pd.qcut(traindf['year'], q=3)
+traindf.groupby('year_grp')['year'].describe()
+freqit.oneway(traindf['year_grp']).freqtable()
+
+yrcat = pd.get_dummies(traindf['year_grp'], prefix='yearcat')
+
+traindf = traindf.merge(yrcat
+                        ,how='outer'
+                        ,left_index=True
+                        ,right_index=True
+                        ,indicator=True)
+traindf.head()
+traindf._merge.value_counts()
+
+traindf = traindf.rename(columns = {'yearcat_(-3000.001, 2006.0]':'yearcat_1'
+                                    ,'yearcat_(2006.0, 2013.0]':'yearcat_2'
+                                    ,'yearcat_(2013.0, 2018.0]':'yearcat_3'})
+
 # impute zeroes
 def impute_zero_to_mean(series):
     """
@@ -91,21 +115,6 @@ imp_zero_cols = ['min_players','max_players','avg_time','min_time','max_time']
 for i in imp_zero_cols:
     traindf[i+'_imp'], traindf[i+'_impflg'] = impute_zero_to_mean(traindf[i])
 
-# impute unlikely year
-def impute_year(series, min_yr_val):
-    """
-    impute unlikely years to mean year
-    return column  of imputed values and column of impute flags
-    """
-    series[series < min_yr_val] = np.nan
-    col = series.to_numpy().reshape(-1,1)
-    imputer = SimpleImputer(missing_values=np.nan, strategy='mean', add_indicator=True)
-    imputer.fit(col)
-    imp_col = imputer.transform(col)
-    imputed = pd.Series(imp_col[:,0])
-    impflag = pd.Series(imp_col[:,1])
-    return imputed, impflag
 
-traindf['year_imp'], traindf['year_impflg'] = impute_year(traindf['year'], 1790)
 
 ####################  Model  ####################
