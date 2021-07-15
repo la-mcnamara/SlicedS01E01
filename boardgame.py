@@ -18,6 +18,8 @@ import freqit
 from pandas_profiling import ProfileReport
 import math
 from sklearn.impute import SimpleImputer
+from xgboost import XGBRegressor
+from sklearn.model_selection import cross_val_score
 
 # set working, output directories
 workdir = r'/Users/Lauren/Documents/Python/Kaggle/SlicedS01E01'
@@ -115,6 +117,29 @@ imp_zero_cols = ['min_players','max_players','avg_time','min_time','max_time']
 for i in imp_zero_cols:
     traindf[i+'_imp'], traindf[i+'_impflg'] = impute_zero_to_mean(traindf[i])
 
+Xvars = ['num_votes', 'age', 'owned','min_players','max_players'
+        ,'avg_time','min_time','max_time','year']
+yvar = 'geek_rating'
+
+X = traindf[Xvars]
+y = traindf[yvar]
+
+# need to impute zero to mean
+X_test = testdf[Xvars]
 
 
-####################  Model  ####################
+####################  Fit Model  ####################
+### xgboost
+# this week's metric: rmse
+scores = cross_val_score(XGBRegressor(objective='reg:squarederror'), X, y, scoring='neg_mean_squared_error')
+rmse_score = (-scores)**0.5
+rmse_score.mean()
+
+
+scores2 = cross_val_score(XGBRegressor(objective='reg:squaredlogerror'), X, y, scoring='neg_mean_squared_error')
+((-scores)**0.5).mean()
+
+reg = XGBRegressor(objective='reg:squarederror')
+reg.fit(X,y)
+
+y_pred = reg.predict(X_test)
